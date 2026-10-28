@@ -1,0 +1,15 @@
+{
+  "name": "meltingspot",
+  "description": "MeltingSpot plugins for AI assistants",
+  "owner": {
+    "name": "MeltingSpot",
+    "url": "https://meltingspot.io"
+  },
+  "plugins": [
+    {
+      "name": "meltingspot",
+      "source": "./",
+      "description": "Connects your assistant to the MeltingSpot MCP server and teaches it how to use its tools."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "meltingspot": {
+      "type": "http",
+      "url": "https://mcp.meltingspot.io/mcp"
+    }
+  }
+}

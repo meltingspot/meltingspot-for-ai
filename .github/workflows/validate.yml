@@ -1,0 +1,35 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # `node --test scripts/` does not resolve a directory on Node 22+: the
+      # test files are passed as a glob instead
+      - name: Test the check script
+        run: node --test "scripts/**/*.test.mjs"
+
+      - name: Check the skills against tools.json
+        run: node scripts/check-skills.mjs
+
+      # Pinned to the version validated locally: bump it deliberately, after
+      # running `claude plugin validate --strict .` with the new version
+      - name: Install the Claude Code CLI
+        run: npm install --global @anthropic-ai/claude-code@2.1.312
+
+      - name: Validate the plugin and the marketplace
+        run: claude plugin validate --strict .

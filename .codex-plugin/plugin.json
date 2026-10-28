@@ -1,0 +1,32 @@
+{
+  "name": "meltingspot",
+  "version": "0.1.0",
+  "description": "Connects your assistant to the MeltingSpot MCP server and teaches it how to use its tools: one Spot per connection, pagination, batches, confirmations, errors and untrusted member content.",
+  "author": {
+    "name": "MeltingSpot",
+    "url": "https://meltingspot.io"
+  },
+  "homepage": "https://github.com/meltingspot/meltingspot-for-ai",
+  "repository": "https://github.com/meltingspot/meltingspot-for-ai",
+  "license": "BSD-3-Clause",
+  "keywords": ["meltingspot", "community", "mcp", "spot", "members", "moderation"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "MeltingSpot",
+    "shortDescription": "Manage your MeltingSpot Spot",
+    "longDescription": "Connects to the MeltingSpot MCP server to read and manage the Spot of the connection: members, groups, tags, channels, lives, collections, moderation and search. Bundled skills teach the assistant the rules of the tools: confirmations, batches, pagination, errors and untrusted member content.",
+    "developerName": "MeltingSpot",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://meltingspot.io",
+    "privacyPolicyURL": "https://www.iubenda.com/privacy-policy/99274573",
+    "termsOfServiceURL": "https://www.meltingspot.io/terms-and-conditions",
+    "defaultPrompt": [
+      "Show me the Spot of this connection"
+    ],
+    "brandColor": "#FF5C66",
+    "composerIcon": "./assets/logo.svg",
+    "logo": "./assets/logo.svg"
+  }
+}

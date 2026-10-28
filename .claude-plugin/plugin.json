@@ -1,0 +1,16 @@
+{
+  "name": "meltingspot",
+  "version": "0.1.0",
+  "description": "Connects your assistant to the MeltingSpot MCP server and teaches it how to use its tools: one Spot per connection, pagination, batches, confirmations, errors and untrusted member content.",
+  "author": {
+    "name": "MeltingSpot",
+    "url": "https://meltingspot.io"
+  },
+  "homepage": "https://github.com/meltingspot/meltingspot-for-ai",
+  "repository": "https://github.com/meltingspot/meltingspot-for-ai",
+  "license": "BSD-3-Clause",
+  "keywords": ["meltingspot", "community", "mcp", "spot", "members", "moderation"],
+  "icon": "./assets/logo.svg",
+  "privacyPolicyUrl": "https://www.iubenda.com/privacy-policy/99274573",
+  "termsOfServiceUrl": "https://www.meltingspot.io/terms-and-conditions"
+}

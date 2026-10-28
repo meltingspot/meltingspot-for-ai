@@ -29,6 +29,13 @@ const TOOLS = [
 
 // Valid manifests: every fixture gets them unless a test overrides one
 const MANIFESTS = {
+  'plugin.json': {
+    name: 'meltingspot',
+    version: '0.1.0',
+    extensions: {
+      'com.openai': { interface: { logo: './assets/logo.svg', composerIcon: './assets/logo.svg' } },
+    },
+  },
   '.claude-plugin/plugin.json': { name: 'meltingspot', version: '0.1.0' },
   '.codex-plugin/plugin.json': {
     name: 'meltingspot',
@@ -410,6 +417,23 @@ describe('check-skills', () => {
       const root = createFixture({ files: { 'assets/logo.svg': null } });
 
       assertFails(root, /\.codex-plugin\/plugin\.json: "interface\.logo" \(\.\/assets\/logo\.svg\) does not exist/);
+    });
+
+    it('fails on a missing asset of the root plugin.json', () => {
+      const root = createFixture({ files: { 'assets/logo.svg': null } });
+
+      assertFails(
+        root,
+        /(?:^|\n)✘ plugin\.json: "extensions\["com\.openai"\]\.interface\.logo" \(\.\/assets\/logo\.svg\) does not exist/,
+      );
+    });
+
+    it('fails on a version mismatch of the root plugin.json', () => {
+      const root = createFixture({
+        files: { 'plugin.json': { name: 'meltingspot', version: '0.2.0' } },
+      });
+
+      assertFails(root, /version mismatch: plugin\.json 0\.2\.0/);
     });
 
     it('fails on a marketplace source outside the plugin', () => {

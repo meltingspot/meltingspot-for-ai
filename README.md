@@ -11,8 +11,9 @@ and bundles skills that teach the assistant how to use its tools safely.
 ## Prerequisites
 
 - You are an **administrator** of the Spot you want to connect.
-- The **MCP server is enabled for that Spot**. It is enabled Spot by Spot:
-  ask MeltingSpot to enable it for each Spot you want to use.
+- The **MCP server is enabled for that Spot**. It is enabled Spot by Spot by
+  the MeltingSpot Customer Success team: contact them to enable it for each
+  Spot you want to use.
 - **One connection gives access to one Spot.** When you connect, you choose
   the Spot. To work on another Spot, add another connection.
 - The connection grants the read, write and delete permissions on that Spot.
@@ -135,9 +136,9 @@ backticks. Add the skill to the table above and to `CHANGELOG.md`.
 
 **Ship a domain.** When the tools of a domain are available on the server,
 set their `status` to `delivered` in `tools.json`. Keep the file sorted by
-name. Then bump `version` in `.claude-plugin/plugin.json` and
+name. Then bump `version` in `plugin.json`, `.claude-plugin/plugin.json` and
 `.codex-plugin/plugin.json`, and add the matching entry at the top of
-`CHANGELOG.md`: the check fails when the three differ.
+`CHANGELOG.md`: the check fails when they differ.
 
 ## License
 

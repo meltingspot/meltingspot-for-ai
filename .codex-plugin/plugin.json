@@ -25,7 +25,7 @@
     "defaultPrompt": [
       "Show me the Spot of this connection"
     ],
-    "brandColor": "#FF5C66",
+    "brandColor": "#3D9EF3",
     "composerIcon": "./assets/logo.svg",
     "logo": "./assets/logo.svg"
   }

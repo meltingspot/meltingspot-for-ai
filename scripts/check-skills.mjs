@@ -410,7 +410,7 @@ const changelogVersion = (content) =>
 export const checkManifestVersions = ({ root }) => {
   const problems = [];
   const versions = [];
-  for (const file of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
+  for (const file of ['plugin.json', '.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
     const { value, problem } = tryReadJson(root, file);
     if (problem) {
       problems.push(problem);
@@ -474,9 +474,36 @@ const checkPath = (root, file, field, path) => {
   return existsSync(target) ? [] : [`${file}: "${field}" (${path}) does not exist`];
 };
 
+// Asset paths of a Codex `interface` object
+const checkInterfacePaths = (root, file, prefix, ui) => {
+  const problems = [];
+  for (const field of ['composerIcon', 'logo']) {
+    if (ui[field] !== undefined) {
+      problems.push(...checkPath(root, file, `${prefix}.${field}`, ui[field]));
+    }
+  }
+  for (const [index, path] of (Array.isArray(ui.screenshots) ? ui.screenshots : []).entries()) {
+    problems.push(...checkPath(root, file, `${prefix}.screenshots[${index}]`, path));
+  }
+  return problems;
+};
+
 export const checkManifestPaths = ({ root }) => {
   const problems = [];
 
+  // Root Agent Plugins manifest: the Codex fields live under extensions["com.openai"]
+  const portableFile = 'plugin.json';
+  const portable = tryReadJson(root, portableFile);
+  if (portable.problem) {
+    problems.push(portable.problem);
+  } else {
+    const ui = portable.value?.extensions?.['com.openai']?.interface ?? {};
+    problems.push(
+      ...checkInterfacePaths(root, portableFile, 'extensions["com.openai"].interface', ui),
+    );
+  }
+
+  // Legacy Codex manifest, kept as a fallback
   const codexFile = '.codex-plugin/plugin.json';
   const codex = tryReadJson(root, codexFile);
   if (codex.problem) {
@@ -487,15 +514,7 @@ export const checkManifestPaths = ({ root }) => {
         problems.push(...checkPath(root, codexFile, field, codex.value[field]));
       }
     }
-    const ui = codex.value?.interface ?? {};
-    for (const field of ['composerIcon', 'logo']) {
-      if (ui[field] !== undefined) {
-        problems.push(...checkPath(root, codexFile, `interface.${field}`, ui[field]));
-      }
-    }
-    for (const [index, path] of (Array.isArray(ui.screenshots) ? ui.screenshots : []).entries()) {
-      problems.push(...checkPath(root, codexFile, `interface.screenshots[${index}]`, path));
-    }
+    problems.push(...checkInterfacePaths(root, codexFile, 'interface', codex.value?.interface ?? {}));
   }
 
   for (const file of ['.claude-plugin/marketplace.json', '.agents/plugins/marketplace.json']) {

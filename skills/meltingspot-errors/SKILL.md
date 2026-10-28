@@ -25,7 +25,7 @@ does not change by retrying.
 
 | Message | Cause | Action to propose |
 | --- | --- | --- |
-| `The MCP server is not enabled for this Spot.` | The MCP server is turned off for the Spot of the connection. | Ask MeltingSpot to enable the MCP server for this Spot. |
+| `The MCP server is not enabled for this Spot.` | The MCP server is turned off for the Spot of the connection. | Contact the MeltingSpot Customer Success team, who can enable the MCP server for this Spot. |
 | `You must be an administrator of this Spot to use this tool.` | The connected user is no longer an administrator of the Spot. | Reconnect with an administrator account, or ask an administrator to restore the role. |
 | `Your session no longer gives access to this Spot. Reconnect to restore access.` | The web session that approved the connection no longer gives access to the Spot, for example because of the SSO rules of the Spot. | Reconnect the MeltingSpot connector, signing in the way the Spot requires. |
 | `This connection cannot read this Spot: this tool requires read permission.` | The connection was approved without the read permission. | Reconnect and approve the read permission. |

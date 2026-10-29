@@ -4,9 +4,14 @@ Status: delivered
 
 ## What it is
 
-A Spot is a MeltingSpot community: its members, its groups and tags, and its
-content (channels, forums, lives, courses, learning paths, collections). A
-connection gives access to exactly one Spot, and every tool acts on it.
+A Spot is a MeltingSpot academy. MeltingSpot connects training content, the
+knowledge of a company and its tools to build agents that train teams inside
+the software they use, when they need it. The Spot holds that content
+(courses, learning paths, lives, collections, channels, forums) and the people
+who learn from it (members, groups, tags). It feeds an AI coach, the Learning
+Agent.
+
+A connection gives access to exactly one Spot, and every tool acts on it.
 
 ## Key fields
 

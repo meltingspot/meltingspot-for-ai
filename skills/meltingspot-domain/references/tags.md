@@ -7,6 +7,9 @@ Status: delivered
 A tag is an ordered label of the Spot, with an optional emoji. Through the
 tools, tags are assigned to members, to describe or segment them.
 
+Other resources can carry the tags of the Spot too: channels, topics, lives
+and the documents of collections. No tool assigns or removes those tags.
+
 ## Key fields
 
 - `name`: required, 1 to 255 characters.

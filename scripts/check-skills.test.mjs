@@ -75,11 +75,11 @@ const UPCOMING_LINE = UPCOMING_STATUS_LINE;
 // A reference: its status line, an empty line, then the body (line 3)
 const reference = (statusLine, body) => `${statusLine}\n\n${body}\n`;
 
-// Rows of the references index of a SKILL.md: [path, status] pairs
+// Rows of a SKILL.md table that points to its references: [path, status] pairs
 const referencesIndex = (rows) =>
   ['| Reference | Status |', '| --- | --- |', ...rows.map(([path, status]) => `| \`${path}\` | ${status} |`)].join('\n');
 
-// The skill meltingspot-groups with its references index
+// The skill meltingspot-groups, pointing to its references
 const groupsSkill = (rows, body = '') =>
   skill({ name: 'meltingspot-groups', body: `${body}\n\n${referencesIndex(rows)}` });
 
@@ -680,13 +680,13 @@ describe('check-skills', () => {
       );
     });
 
-    describe('references index', () => {
+    describe('pointers to the references', () => {
       const references = {
         'meltingspot-groups/references/groups.md': reference(DELIVERED_LINE, 'Use `group_list`.'),
         'meltingspot-groups/references/topics.md': reference(UPCOMING_LINE, 'Use `topic_list`.'),
       };
 
-      it('fails when a reference is missing from the index', () => {
+      it('fails when the SKILL.md does not point to a reference', () => {
         const root = createFixture({
           skills: {
             'meltingspot-groups/SKILL.md': groupsSkill([['references/groups.md', 'delivered']]),
@@ -694,13 +694,24 @@ describe('check-skills', () => {
           },
         });
 
-        assertFails(
-          root,
-          /skills\/meltingspot-groups\/SKILL\.md: the references index does not list "references\/topics\.md"/,
-        );
+        assertFails(root, /skills\/meltingspot-groups\/SKILL\.md: does not point to "references\/topics\.md"/);
       });
 
-      it('fails on a listed path that does not exist', () => {
+      it('accepts pointers in prose, several on a line', () => {
+        const root = createFixture({
+          skills: {
+            'meltingspot-groups/SKILL.md': skill({
+              name: 'meltingspot-groups',
+              body: 'Read `references/groups.md` and `references/topics.md`.',
+            }),
+            ...references,
+          },
+        });
+
+        assertPasses(root);
+      });
+
+      it('fails on a path that does not exist', () => {
         const root = createFixture({
           skills: {
             'meltingspot-groups/SKILL.md': groupsSkill([
@@ -712,27 +723,7 @@ describe('check-skills', () => {
           },
         });
 
-        assertFails(
-          root,
-          /skills\/meltingspot-groups\/SKILL\.md:\d+: the index lists "references\/tags\.md", which does not exist/,
-        );
-      });
-
-      it('fails when the index status differs from the status line', () => {
-        const root = createFixture({
-          skills: {
-            'meltingspot-groups/SKILL.md': groupsSkill([
-              ['references/groups.md', 'delivered'],
-              ['references/topics.md', 'delivered'],
-            ]),
-            ...references,
-          },
-        });
-
-        assertFails(
-          root,
-          /skills\/meltingspot-groups\/SKILL\.md:\d+: the index says "delivered" for "references\/topics\.md", whose status line says "upcoming"/,
-        );
+        assertFails(root, /skills\/meltingspot-groups\/SKILL\.md:\d+: "references\/tags\.md" does not exist/);
       });
     });
   });

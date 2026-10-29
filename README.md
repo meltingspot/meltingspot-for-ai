@@ -121,8 +121,8 @@ The CI checks that:
   it cites: a delivered reference cites no upcoming tool, an upcoming
   reference cites at least one tool, and an upcoming reference that cites only
   delivered tools must become delivered;
-- the `SKILL.md` of a skill that has references indexes every one of them,
-  with the same status as its status line;
+- the `SKILL.md` of a skill that has references points to every one of them,
+  and every reference it points to exists;
 - the skills follow the Agent Skills format;
 - the manifests agree with each other (version, MCP URL, paths).
 
@@ -152,9 +152,7 @@ backticks. Add the skill to the table above and to `CHANGELOG.md`.
    name.
 2. Set the first line of the domain's reference in
    `skills/meltingspot-domain/references/` to `Status: delivered`.
-3. Set its status to `delivered` in the references index of
-   `skills/meltingspot-domain/SKILL.md`.
-4. Bump `version` in `plugin.json`, `.claude-plugin/plugin.json` and
+3. Bump `version` in `plugin.json`, `.claude-plugin/plugin.json` and
    `.codex-plugin/plugin.json`, and add the matching entry at the top of
    `CHANGELOG.md`: the check fails when they differ.
 

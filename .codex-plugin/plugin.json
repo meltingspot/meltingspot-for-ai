@@ -9,7 +9,7 @@
   "homepage": "https://github.com/meltingspot/meltingspot-for-ai",
   "repository": "https://github.com/meltingspot/meltingspot-for-ai",
   "license": "BSD-3-Clause",
-  "keywords": ["meltingspot", "community", "mcp", "spot", "members", "moderation"],
+  "keywords": ["meltingspot", "academy", "learning", "mcp", "spot", "members", "moderation"],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {

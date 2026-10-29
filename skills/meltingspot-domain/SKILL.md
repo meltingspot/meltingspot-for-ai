@@ -11,7 +11,9 @@ the tools (pagination, batches, dates, ids) are in the
 
 ## The Spot
 
-- A Spot is a MeltingSpot community. **One connection = one Spot**: every tool
+- A Spot is a MeltingSpot academy: the training content, the knowledge of a
+  company and the people who learn from it. It feeds an AI coach, the Learning
+  Agent (see `references/spot.md`). **One connection = one Spot**: every tool
   acts on the Spot of the connection and never takes a `spotId`. Check it with
   `spot_get`.
 - Every tool requires the connected user to be an administrator of the Spot
@@ -38,12 +40,15 @@ invitation, before the person registers.
 
 ## Map of the resources
 
+Read the reference of a domain before a write in that domain, or when a
+result surprises you.
+
 | Resource | What it is | Reference |
 | --- | --- | --- |
-| Spot | The community, its settings, theme and modules. | `references/spot.md` |
+| Spot | The academy, its settings, theme and modules. | `references/spot.md` |
 | Member | A person in the Spot; custom properties describe members. | `references/members.md` |
 | Group | A named set of members, static or smart, linked to resources. | `references/groups.md` |
-| Tag | An ordered label assigned to members. | `references/tags.md` |
+| Tag | An ordered label; the tools assign it to members. | `references/tags.md` |
 | Channel | A chat space, public or private. | `references/channels.md` |
 | Forum | A space of topics, private or secret. | `references/forums.md` |
 | Topic | A discussion thread in a forum. | `references/topics.md` |
@@ -125,29 +130,3 @@ The writes of the tools are attributed to the connected user:
   again from the start: its progress is erased.
 - Accepting reported content emails its author; accepting or declining it
   notifies each reporter in the app.
-
-## References and their status
-
-Each reference starts with its status. `Status: delivered` means its tools
-are available. `Status: upcoming` means they may not be available on your
-server yet: check the tools available to you in this session before using
-them, and do not claim they work.
-
-| Reference | Status |
-| --- | --- |
-| `references/spot.md` | delivered |
-| `references/members.md` | delivered |
-| `references/groups.md` | delivered |
-| `references/tags.md` | delivered |
-| `references/channels.md` | delivered |
-| `references/forums.md` | delivered |
-| `references/topics.md` | delivered |
-| `references/lives.md` | delivered |
-| `references/courses.md` | delivered |
-| `references/learning-paths.md` | delivered |
-| `references/collections.md` | delivered |
-| `references/moderation.md` | delivered |
-| `references/search.md` | delivered |
-
-Read the reference of a domain before a write in that domain, or when a
-result surprises you.

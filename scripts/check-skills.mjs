@@ -404,16 +404,16 @@ export const checkToolReferences = ({ references, tools }) => {
 // A reference is a Markdown file under `skills/*/references/`. It documents one
 // domain, and its first line says whether that domain is delivered. The state
 // of a domain is deduced from the tools its reference cites. The SKILL.md of a
-// skill that has references indexes them in a table whose rows are
-// `| \`references/<file>.md\` | delivered |` or `| ... | upcoming |`.
+// skill that has references points to each of them as `references/<file>.md`
+// in a code span.
 
 export const DELIVERED_STATUS_LINE = 'Status: delivered';
 export const UPCOMING_STATUS_LINE =
   'Status: upcoming — these tools may not be available on your server yet; check the tools available to you in this session.';
 
 const REFERENCE_FILE = /^skills\/([^/]+)\/(references\/.+\.md)$/;
-// A row of the references index: the path in a code span, then the status
-const INDEX_ROW = /^\|\s*`(references\/[^`]+\.md)`\s*\|\s*([a-z]+)\s*\|/;
+// A mention of a reference in a SKILL.md: its path in a code span
+const REFERENCE_MENTION = /`(references\/[^`]+\.md)`/g;
 
 const toPosix = (file) => file.split(sep).join('/');
 
@@ -518,25 +518,20 @@ export const checkReferencesIndex = ({ skills }) => {
     if (own.length === 0 || content === null) {
       return [];
     }
-    const rows = content
+    const mentions = content
       .split(/\r?\n/)
-      .map((text, index) => ({ match: text.trim().match(INDEX_ROW), line: index + 1 }))
-      .filter(({ match }) => match !== null)
-      .map(({ match, line }) => ({ path: match[1], status: match[2], line }));
+      .flatMap((text, index) =>
+        [...text.matchAll(REFERENCE_MENTION)].map((match) => ({ path: match[1], line: index + 1 })),
+      );
     const problems = [];
-    for (const { path, status, line } of rows) {
-      const reference = own.find((entry) => entry.path === path);
-      if (!reference) {
-        problems.push(`${file}:${line}: the index lists "${path}", which does not exist`);
-      } else if (reference.status !== null && reference.status !== status) {
-        problems.push(
-          `${file}:${line}: the index says "${status}" for "${path}", whose status line says "${reference.status}"`,
-        );
+    for (const { path, line } of mentions) {
+      if (!own.some((entry) => entry.path === path)) {
+        problems.push(`${file}:${line}: "${path}" does not exist`);
       }
     }
     for (const { path } of own) {
-      if (!rows.some((row) => row.path === path)) {
-        problems.push(`${file}: the references index does not list "${path}"`);
+      if (!mentions.some((mention) => mention.path === path)) {
+        problems.push(`${file}: does not point to "${path}"`);
       }
     }
     return problems;

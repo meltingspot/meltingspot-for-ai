@@ -1,6 +1,6 @@
 ---
 name: meltingspot-domain
-description: What a MeltingSpot Spot is and how its resources relate. Load it for any question about the structure of a Spot, its resources or their links - members and their roles and statuses, custom properties, groups and linked groups, tags, channels, forums and topics, lives with their hosts, speakers and participants, courses, learning paths, collections and documents, moderation and search - and before acting on a resource whose meaning or side effects you are not sure of, for example who receives an invitation or what linking a group does. Holds one reference per domain.
+description: What a MeltingSpot Spot is and how its resources relate. Load it for any question about the structure of a Spot, its resources or their links - members and their roles and statuses, custom roles, custom properties, groups and linked groups, tags, channels, forums and topics, lives with their hosts, speakers and participants, courses, learning paths, collections and documents, moderation and search - and before acting on a resource whose meaning or side effects you are not sure of, for example who receives an invitation or what linking a group does. Holds one reference per domain.
 ---
 
 # The MeltingSpot domain
@@ -33,6 +33,9 @@ designated by its `spotMemberId`, which is not a user id. It exists from the
 invitation, before the person registers.
 
 - `role`: `Admin` or `Member`.
+- `customRoleId`: the custom role the member carries, or `null`. A custom
+  role gives extra permissions on top of the role (see
+  `references/custom-roles.md`).
 - `status`: `Invited` (not registered yet), `Pending` (waiting for approval),
   `Accepted` (active), `Rejected`, `Deactivated`, `DeclinedInvitation`,
   `Left`.
@@ -47,6 +50,7 @@ result surprises you.
 | --- | --- | --- |
 | Spot | The academy, its settings, theme and modules. | `references/spot.md` |
 | Member | A person in the Spot; custom properties describe members. | `references/members.md` |
+| Custom role | Extra permissions given to the members who carry it. | `references/custom-roles.md` |
 | Group | A named set of members, static or smart, linked to resources. | `references/groups.md` |
 | Tag | An ordered label; the tools assign it to members. | `references/tags.md` |
 | Channel | A chat space, public or private. | `references/channels.md` |
@@ -65,9 +69,10 @@ result surprises you.
 
 - A member belongs to groups and carries tags.
 - A **static** group is filled by hand (`group_add_members`). A **smart**
-  group fills itself from rules (tags, custom properties, other groups); the
-  tools do not change its members.
-- A group or a tag used by the rules of a smart group cannot be deleted.
+  group fills itself from rules (tags, custom properties, custom roles, other
+  groups); the tools do not change its members.
+- A group, a tag or a custom role used by the rules of a smart group cannot
+  be deleted.
 
 ### Linked groups and access
 

@@ -34,7 +34,7 @@ and the documents of collections. No tool assigns or removes those tags.
 | `tag_delete` | Delete a tag. | Returns `{ deleted: true, tagId }`. |
 | `tag_assign_members` | Assign a tag to members. | `spotMemberIds`: 1 to 100. |
 | `tag_unassign_members` | Remove a tag from members. | `spotMemberIds`: 1 to 100. |
-| `tag_list_members` | List the members who carry a tag. | Paginated; `email`, `firstname`, `lastname` (exact values, 50 at most each, none containing a comma); `role`; `registrationDate`. |
+| `tag_list_members` | List the members who carry a tag. | Paginated; same filters as `member_list`: `email`, `firstname`, `lastname` (exact values, 1 to 50 each, none containing a comma), `role`, `status`, `customRoleId`, `invitationDate`, `registrationDate`, `updatedAt` ranges. |
 
 ## Pitfalls
 
@@ -51,3 +51,4 @@ and the documents of collections. No tool assigns or removes those tags.
   members who did not carry the tag, and `failedSpotMemberIds`. It deletes
   neither the tag nor the members.
 - The tools take `spotMemberIds`, not user ids.
+

@@ -10,7 +10,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { DELIVERED_STATUS_LINE, UPCOMING_STATUS_LINE } from './check-skills.mjs';
+import {
+  DELIVERED_STATUS_LINE,
+  UPCOMING_SECTION_HEADING,
+  UPCOMING_STATUS_LINE,
+} from './check-skills.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./check-skills.mjs', import.meta.url));
 
@@ -582,6 +586,41 @@ describe('check-skills', () => {
       );
     });
 
+    // A delivered reference with an `## Upcoming` section: the heading is on
+    // line 5, the first line of the section on line 7, the tool on line 9
+    const withUpcomingSection = (sectionStart, after = '') =>
+      withReferences({
+        'references/groups.md': reference(
+          DELIVERED_LINE,
+          `Use \`group_list\`.\n\n${UPCOMING_SECTION_HEADING}\n\n${sectionStart}\n\nList topics with \`topic_list\`.${after}`,
+        ),
+      });
+
+    it('accepts an upcoming tool cited inside the "## Upcoming" section of a delivered reference and lists it in the summary', () => {
+      const { stdout } = assertPasses(withUpcomingSection(UPCOMING_LINE));
+
+      assert.match(stdout, /topic_list \(skills\/meltingspot-groups\/references\/groups\.md:9\)/);
+    });
+
+    it('fails when a delivered reference cites an upcoming tool after its "## Upcoming" section', () => {
+      const root = withUpcomingSection(UPCOMING_LINE, '\n\n## Pitfalls\n\nAgain: `topic_list`.');
+
+      const stderr = assertFails(
+        root,
+        /references\/groups\.md:13: a delivered reference cites the upcoming tool "topic_list" outside a "## Upcoming" section/,
+      );
+      assert.doesNotMatch(stderr, /groups\.md:9:/);
+    });
+
+    it('fails on an "## Upcoming" section that does not start with the upcoming status sentence', () => {
+      const root = withUpcomingSection('These tools come later.');
+
+      assertFails(root, [
+        /references\/groups\.md:5: a "## Upcoming" section must start with "Status: upcoming — /,
+        /references\/groups\.md:9: a delivered reference cites the upcoming tool "topic_list" outside/,
+      ]);
+    });
+
     it('fails and asks to deliver an upcoming reference that cites only delivered tools', () => {
       const root = withReferences({
         'references/groups.md': reference(UPCOMING_LINE, 'Use `group_list`.'),
@@ -732,6 +771,6 @@ describe('check-skills', () => {
     const { status, stdout, stderr } = check();
 
     assert.equal(status, 0, stderr);
-    assert.match(stdout, /Tools: 100 delivered, 0 upcoming\./);
+    assert.match(stdout, /Tools: 107 delivered, 0 upcoming\./);
   });
 });

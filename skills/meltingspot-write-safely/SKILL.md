@@ -64,7 +64,7 @@ Some tools return less than what was requested:
   members of the Spot, unchanged;
 - `live_invite_speaker_by_email` can return `null`: check with
   `live_list_speakers`;
-- `member_custom_properties_set` ignores an unknown slug or a value of the
+- `member_set_custom_properties` ignores an unknown slug or a value of the
   wrong type: compare its output with what you sent.
 
 A deletion returns `{ deleted: true, <entity>Id }`, for example

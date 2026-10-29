@@ -47,11 +47,15 @@ There are two types of groups:
 | `group_delete` | Delete a group. | Returns `{ deleted: true, groupId }`. |
 | `group_add_members` | Add members to a static group. | `spotMemberIds`: 1 to 100. |
 | `group_remove_members` | Remove members from a static group. | `spotMemberIds`: 1 to 100. |
+| `group_list_members` | List the members of a static or smart group. | `groupId`; paginated; same filters as `member_list`: `email`, `firstname`, `lastname` (exact values, 1 to 50 each, none containing a comma), `role`, `status`, `customRoleId`, `invitationDate`, `registrationDate`, `updatedAt` ranges. |
 
 ## Pitfalls
 
-- No tool lists the members of a group. `group_list` and `group_get` do not
-  return members.
+- `group_list` and `group_get` do not return members: use
+  `group_list_members`. It reads a smart group like a static one, the members
+  who currently follow its rules; a member who has just come to follow the
+  rules may appear only after a short delay. An unknown group, or a group of
+  another Spot, is not found.
 - `group_add_members` and `group_remove_members` work on static groups only. A
   smart group is reported as `Cannot find group with id ...`.
 - `group_add_members` returns `addedSpotMemberIds` and `failedSpotMemberIds`.
@@ -67,3 +71,4 @@ There are two types of groups:
   by the rules of a smart group, or linked to the content of a learning path,
   cannot be deleted: `Group with ID ... cannot be deleted.`
 - `group_update` ignores an empty `name`. `description: null` empties it.
+

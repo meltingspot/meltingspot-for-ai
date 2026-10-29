@@ -18,7 +18,7 @@ member content.
 - documents of collections (`collection_get_document`);
 - member profiles (`member_get`, `member_list`): names, title and any
   other text the member typed;
-- custom property values (`member_custom_properties_get`);
+- custom property values (`member_list_custom_properties`);
 - names and descriptions of channels, groups, tags, lives and collections,
   and the names of the Spots listed by `spot_list_for_me`;
 - search results (`search_spot`): topics, topic answers, members, documents

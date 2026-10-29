@@ -411,7 +411,13 @@ export const DELIVERED_STATUS_LINE = 'Status: delivered';
 export const UPCOMING_STATUS_LINE =
   'Status: upcoming — these tools may not be available on your server yet; check the tools available to you in this session.';
 
+// A delivered reference may announce upcoming tools in a section whose heading
+// is exactly this one, and whose first non-empty line is UPCOMING_STATUS_LINE.
+// The section ends at the next heading of level 1 or 2
+export const UPCOMING_SECTION_HEADING = '## Upcoming';
+
 const REFERENCE_FILE = /^skills\/([^/]+)\/(references\/.+\.md)$/;
+const SECTION_END = /^#{1,2}\s/;
 // A mention of a reference in a SKILL.md: its path in a code span
 const REFERENCE_MENTION = /`(references\/[^`]+\.md)`/g;
 
@@ -435,8 +441,44 @@ const referencesOf = (skills) =>
           : firstLine === UPCOMING_STATUS_LINE
             ? 'upcoming'
             : null;
-      return [{ dir, file, path: match[2], status }];
+      return [{ dir, file, path: match[2], status, sections: upcomingSectionsOf(content) }];
     }),
+  );
+
+/**
+ * Finds the `## Upcoming` sections of a Markdown file. Returns their heading
+ * line, their last line (1-based, inclusive) and whether they start with the
+ * upcoming status sentence.
+ */
+export const upcomingSectionsOf = (content) => {
+  const lines = content
+    .replace(/^﻿/, '')
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd());
+  const sections = [];
+  lines.forEach((text, index) => {
+    if (text !== UPCOMING_SECTION_HEADING) {
+      return;
+    }
+    let end = index + 1;
+    while (end < lines.length && !SECTION_END.test(lines[end])) {
+      end += 1;
+    }
+    const firstLine = lines.slice(index + 1, end).find((line) => line.trim() !== '');
+    sections.push({
+      line: index + 1,
+      end,
+      hasStatusLine: firstLine?.trim() === UPCOMING_STATUS_LINE,
+    });
+  });
+  return sections;
+};
+
+// Whether a line is inside an `## Upcoming` section that starts with the
+// upcoming status sentence
+const inValidUpcomingSection = (sections, line) =>
+  sections.some(
+    (section) => section.hasStatusLine && line > section.line && line <= section.end,
   );
 
 const statusesByName = (tools) =>
@@ -475,20 +517,37 @@ export const checkReferenceStatusLine = ({ skills }) =>
         `${file}:1: the first line must be exactly "${DELIVERED_STATUS_LINE}" or "${UPCOMING_STATUS_LINE}" (check the dash and the trailing sentence)`,
     );
 
+// A delivered reference cites upcoming tools only inside a valid
+// `## Upcoming` section
 export const checkDeliveredReferences = ({ skills, tools, references }) => {
   const statuses = statusesByName(tools);
-  const delivered = new Set(
+  const delivered = new Map(
     referencesOf(skills)
       .filter(({ status }) => status === 'delivered')
-      .map(({ file }) => file),
+      .map(({ file, sections }) => [file, sections]),
   );
   return references
-    .filter(({ file, name }) => delivered.has(file) && statuses.get(name) === 'upcoming')
+    .filter(
+      ({ file, line, name }) =>
+        delivered.has(file) &&
+        statuses.get(name) === 'upcoming' &&
+        !inValidUpcomingSection(delivered.get(file), line),
+    )
     .map(
       ({ file, line, name }) =>
-        `${file}:${line}: a delivered reference cites the upcoming tool "${name}"`,
+        `${file}:${line}: a delivered reference cites the upcoming tool "${name}" outside a "${UPCOMING_SECTION_HEADING}" section`,
     );
 };
+
+export const checkUpcomingSections = ({ skills }) =>
+  referencesOf(skills).flatMap(({ file, sections }) =>
+    sections
+      .filter(({ hasStatusLine }) => !hasStatusLine)
+      .map(
+        ({ line }) =>
+          `${file}:${line}: a "${UPCOMING_SECTION_HEADING}" section must start with "${UPCOMING_STATUS_LINE}"`,
+      ),
+  );
 
 export const checkUpcomingReferences = ({ skills, tools, references }) => {
   const statuses = statusesByName(tools);
@@ -544,6 +603,7 @@ export const SKILL_CHECKS = [
   checkDeliveredToolsCited,
   checkReferenceStatusLine,
   checkDeliveredReferences,
+  checkUpcomingSections,
   checkUpcomingReferences,
   checkReferencesIndex,
 ];

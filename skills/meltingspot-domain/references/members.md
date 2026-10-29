@@ -38,23 +38,28 @@ company, plan…). Each member can have a value for each property.
   members, live speakers and participants, course and learning path
   participants are all designated through Spot members.
 - Custom properties can feed the rules of smart groups.
+- A member carries at most one custom role, its `customRoleId`, which gives
+  it extra permissions (see `custom-roles.md`). `member_list` filters the
+  members by `customRoleId`; `member_update` gives or takes back the role.
 
 ## Tools
 
 | Tool | Use | Bounds |
 | --- | --- | --- |
-| `member_list` | List the members. | Paginated; `email`, `firstname`, `lastname` (exact values, 1 to 50 each); `role`; `status`; `customRoleId`; `invitationDate`, `registrationDate`, `updatedAt` ranges. |
+| `member_list` | List the members. | Paginated; `email`, `firstname`, `lastname` (exact values, 1 to 50 each, none containing a comma); `role`; `status`; `customRoleId`; `invitationDate`, `registrationDate`, `updatedAt` ranges. |
 | `member_get` | Read one member. | `spotMemberId`. |
 | `member_invite` | Invite people to the Spot by email. | `emails`: 1 to 100; `withEmailNotification` (default `false`). |
 | `member_update` | Change a member. | `firstname`, `lastname`, `title`, `role`, `status` (`Accepted`, `Rejected`, `Deactivated`), `avatarUrl`, `embedBaseUrls`, `customRoleId`. |
 | `custom_property_list` | List the custom properties of the Spot, oldest first. | Paginated. |
-| `member_custom_properties_get` | Read the values of a member. | `spotMemberId`; paginated. |
-| `member_custom_properties_set` | Write values for a member, by property slug. | `values`: 1 to 100 `{ customPropertySlug, value }`. |
+| `member_list_custom_properties` | Read the values of a member. | `spotMemberId`; paginated. |
+| `member_set_custom_properties` | Write values for a member, by property slug. | `values`: 1 to 100 `{ customPropertySlug, value }`. |
+| `member_list_form_answers` | Read the answers of a member to the registration form of the Spot, in the order of the questions. | `spotMemberId`; paginated; `questionLabel` filter with `contains`. |
 
 ## Pitfalls
 
 - `member_list` has no free-text search: names and emails must match exactly.
-  To find someone by part of a name, use `search_spot` (see `search.md`).
+  To find someone by part of a name, use `search_spot` (see `search.md`). An
+  exact value that contains a comma is refused (`Invalid parameters`).
 - No tool deletes a member. To remove someone, deactivate the member with
   `member_update`.
 - `member_invite`:
@@ -81,8 +86,8 @@ company, plan…). Each member can have a value for each property.
   error.
 - In `member_update`, `null` clears only `title`, `avatarUrl` and
   `customRoleId`.
-- `member_custom_properties_get` lists only the properties that have a value.
-- `member_custom_properties_set`:
+- `member_list_custom_properties` lists only the properties that have a value.
+- `member_set_custom_properties`:
   - designates properties by slug, from `custom_property_list`;
   - skips without an error an unknown slug, a value of the wrong type, or
     select options that do not exist. Compare the returned `items` with what
@@ -90,3 +95,15 @@ company, plan…). Each member can have a value for each property.
   - takes option slugs for a select; `SingleSelect` takes exactly one;
   - deletes a value when it is `null`.
 - No tool creates or changes the custom properties themselves.
+- `member_list_form_answers`:
+  - Each answer comes with its question: `questionLabel`,
+    `questionContentMarkdown` (the text of the question, in Markdown),
+    `type`, `visibility` (`Public` or `Private`), `isRequired` and
+    `possibleAnswers`.
+  - `answers` is always text: a `CheckBox` answers `"true"` or `"false"`, a
+    `Number` its number as text, a select the labels of its choices, `""` for
+    a choice deleted since the answer.
+  - Answers to private questions are listed too. A `Description` block of
+    the form has no answer and is never listed.
+  - A Spot without registration form returns an empty list. A member of
+    another Spot is not found.

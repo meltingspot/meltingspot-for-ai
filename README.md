@@ -118,9 +118,14 @@ The CI checks that:
   upcoming reference;
 - each reference of a domain (`skills/*/references/*.md`) starts with a status
   line, `Status: delivered` or `Status: upcoming — …`, that matches the tools
-  it cites: a delivered reference cites no upcoming tool, an upcoming
+  it cites: a delivered reference cites no upcoming tool (except in its
+  `## Upcoming` section, below), an upcoming
   reference cites at least one tool, and an upcoming reference that cites only
   delivered tools must become delivered;
+- a delivered reference may cite upcoming tools only inside a section whose
+  heading is exactly `## Upcoming`, and that section starts with the upcoming
+  status sentence (`Status: upcoming — …`); these tools are listed with the
+  other upcoming tools cited;
 - the `SKILL.md` of a skill that has references points to every one of them,
   and every reference it points to exists;
 - the skills follow the Agent Skills format;
@@ -151,7 +156,9 @@ backticks. Add the skill to the table above and to `CHANGELOG.md`.
 1. Set their `status` to `delivered` in `tools.json`. Keep the file sorted by
    name.
 2. Set the first line of the domain's reference in
-   `skills/meltingspot-domain/references/` to `Status: delivered`.
+   `skills/meltingspot-domain/references/` to `Status: delivered`. For tools
+   added to a delivered domain, move their text out of the `## Upcoming`
+   section of its reference, and remove the section when it is empty.
 3. Bump `version` in `plugin.json`, `.claude-plugin/plugin.json` and
    `.codex-plugin/plugin.json`, and add the matching entry at the top of
    `CHANGELOG.md`: the check fails when they differ.

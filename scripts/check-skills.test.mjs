@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { DELIVERED_STATUS_LINE, UPCOMING_STATUS_LINE } from './check-skills.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./check-skills.mjs', import.meta.url));
 
@@ -57,8 +58,30 @@ const MANIFESTS = {
   'assets/logo.svg': '<svg xmlns="http://www.w3.org/2000/svg"/>',
 };
 
-const skill = ({ name, description = 'Load it when testing the checks.', body = '' }) =>
-  `---\nname: ${name}\ndescription: ${description}\n---\n\n# Skill\n\n${body}\n`;
+// Cites every delivered tool of TOOLS: a delivered tool cited by no skill fails
+const CITES_DELIVERED = 'Use `group_create` and `group_list`.';
+
+const skill = ({
+  name,
+  description = 'Load it when testing the checks.',
+  body = '',
+  citesDelivered = true,
+}) =>
+  `---\nname: ${name}\ndescription: ${description}\n---\n\n# Skill\n\n${body}\n${citesDelivered ? `\n${CITES_DELIVERED}\n` : ''}`;
+
+const DELIVERED_LINE = DELIVERED_STATUS_LINE;
+const UPCOMING_LINE = UPCOMING_STATUS_LINE;
+
+// A reference: its status line, an empty line, then the body (line 3)
+const reference = (statusLine, body) => `${statusLine}\n\n${body}\n`;
+
+// Rows of the references index of a SKILL.md: [path, status] pairs
+const referencesIndex = (rows) =>
+  ['| Reference | Status |', '| --- | --- |', ...rows.map(([path, status]) => `| \`${path}\` | ${status} |`)].join('\n');
+
+// The skill meltingspot-groups with its references index
+const groupsSkill = (rows, body = '') =>
+  skill({ name: 'meltingspot-groups', body: `${body}\n\n${referencesIndex(rows)}` });
 
 // The body of skill() starts on line 8
 const BODY_LINE = 8;
@@ -167,8 +190,11 @@ describe('check-skills', () => {
     it('checks every Markdown file of a skill, each span of a line', () => {
       const root = createFixture({
         skills: {
-          ...DEFAULT_SKILLS,
-          'meltingspot-groups/references/x.md': '# Ref\n\nUse `group_create`, not `group_archive`.\n',
+          'meltingspot-groups/SKILL.md': groupsSkill([['references/x.md', 'delivered']]),
+          'meltingspot-groups/references/x.md': reference(
+            DELIVERED_LINE,
+            'Use `group_create`, not `group_archive`.',
+          ),
         },
       });
 
@@ -312,7 +338,9 @@ describe('check-skills', () => {
 
     for (const { rule, dir, content } of valid) {
       it(`accepts ${rule}`, () => {
-        assertPasses(createFixture({ skills: { [`${dir}/SKILL.md`]: content } }));
+        assertPasses(
+          createFixture({ skills: { [`${dir}/SKILL.md`]: `${content}\n${CITES_DELIVERED}\n` } }),
+        );
       });
     }
 
@@ -490,10 +518,229 @@ describe('check-skills', () => {
     });
   });
 
+  describe('domain references', () => {
+    // A skill whose references are all indexed with their status
+    const withReferences = (references) =>
+      createFixture({
+        skills: {
+          'meltingspot-groups/SKILL.md': groupsSkill(
+            Object.entries(references).map(([path, content]) => [
+              path,
+              content.startsWith(UPCOMING_LINE) ? 'upcoming' : 'delivered',
+            ]),
+          ),
+          ...Object.fromEntries(
+            Object.entries(references).map(([path, content]) => [`meltingspot-groups/${path}`, content]),
+          ),
+        },
+      });
+
+    it('fails and lists the delivered tools that no skill cites', () => {
+      const root = createFixture({
+        tools: [TOOLS[0], tool('group_delete', 'group', 'delivered', false, true), ...TOOLS.slice(1)],
+        skills: {
+          'meltingspot-groups/SKILL.md': skill({
+            name: 'meltingspot-groups',
+            body: 'Create it with `group_create`.',
+            citesDelivered: false,
+          }),
+        },
+      });
+
+      assertFails(
+        root,
+        /skills: delivered tools cited by no skill file other than an upcoming reference: group_delete, group_list/,
+      );
+    });
+
+    it('fails when a delivered tool is cited only by an upcoming reference', () => {
+      const root = createFixture({
+        skills: {
+          'meltingspot-groups/SKILL.md': `${skill({
+            name: 'meltingspot-groups',
+            body: 'Create it with `group_create`.',
+            citesDelivered: false,
+          })}\n${referencesIndex([['references/topics.md', 'upcoming']])}\n`,
+          'meltingspot-groups/references/topics.md': reference(
+            UPCOMING_LINE,
+            'List topics with `topic_list`, groups with `group_list`.',
+          ),
+        },
+      });
+
+      assertFails(root, /delivered tools cited by no skill file other than an upcoming reference: group_list/);
+    });
+
+    it('fails with the file, the line and the name when a delivered reference cites an upcoming tool', () => {
+      const root = withReferences({
+        'references/groups.md': reference(DELIVERED_LINE, 'List them with `group_list`, then `topic_list`.'),
+      });
+
+      assertFails(
+        root,
+        /skills\/meltingspot-groups\/references\/groups\.md:3: a delivered reference cites the upcoming tool "topic_list"/,
+      );
+    });
+
+    it('fails and asks to deliver an upcoming reference that cites only delivered tools', () => {
+      const root = withReferences({
+        'references/groups.md': reference(UPCOMING_LINE, 'Use `group_list`.'),
+      });
+
+      assertFails(
+        root,
+        /skills\/meltingspot-groups\/references\/groups\.md:1: every tool it cites is delivered; set its first line to "Status: delivered"/,
+      );
+    });
+
+    it('fails on an upcoming reference that cites no tool', () => {
+      const root = withReferences({
+        'references/topics.md': reference(UPCOMING_LINE, 'Topics come later.'),
+      });
+
+      assertFails(
+        root,
+        /skills\/meltingspot-groups\/references\/topics\.md:1: an upcoming reference must cite at least one tool/,
+      );
+    });
+
+    it('reports only the unknown tool of an upcoming reference that cites nothing else', () => {
+      const root = withReferences({
+        'references/topics.md': reference(UPCOMING_LINE, 'Archive them with `topic_archive`.'),
+      });
+
+      const stderr = assertFails(root, /references\/topics\.md:3: unknown tool "topic_archive"/);
+      assert.match(stderr, /1 problem\(s\) found\./);
+    });
+
+    for (const [rule, firstLine] of [
+      ['a missing status line', '# Groups'],
+      ['an unknown status', 'Status: planned'],
+      ['an upcoming status without its sentence', 'Status: upcoming'],
+      ['an upcoming status with a hyphen instead of the dash', UPCOMING_LINE.replace('—', '-')],
+    ]) {
+      it(`fails on ${rule}, with a hint`, () => {
+        const root = createFixture({
+          skills: {
+            'meltingspot-groups/SKILL.md': groupsSkill([['references/groups.md', 'delivered']]),
+            'meltingspot-groups/references/groups.md': reference(firstLine, 'Use `group_list`.'),
+          },
+        });
+
+        assertFails(
+          root,
+          /skills\/meltingspot-groups\/references\/groups\.md:1: the first line must be exactly "Status: delivered" or "Status: upcoming.*\(check the dash and the trailing sentence\)/,
+        );
+      });
+    }
+
+    it('accepts a status line with a BOM, CRLF line endings and trailing spaces', () => {
+      assertPasses(
+        withReferences({
+          'references/groups.md': `\uFEFF${DELIVERED_LINE}  \r\n\r\nUse \`group_list\`.\r\n`,
+        }),
+      );
+    });
+
+    it('accepts an upcoming tool cited outside the references and lists it in the summary', () => {
+      const root = createFixture({
+        skills: {
+          'meltingspot-groups/SKILL.md': skill({
+            name: 'meltingspot-groups',
+            body: 'Topics come later: `topic_list`.',
+          }),
+        },
+      });
+
+      const { stdout } = assertPasses(root);
+
+      assert.match(stdout, new RegExp(`topic_list \\(skills/meltingspot-groups/SKILL\\.md:${BODY_LINE}\\)`));
+    });
+
+    it('accepts a delivered and an upcoming reference that match their tools', () => {
+      assertPasses(
+        withReferences({
+          'references/groups.md': reference(DELIVERED_LINE, 'Use `group_list`.'),
+          'references/topics.md': reference(
+            UPCOMING_LINE,
+            'Use `topic_list` in a group context (`group_list`).',
+          ),
+        }),
+      );
+    });
+
+    it('ignores the status line of a Markdown file outside references/', () => {
+      assertPasses(
+        createFixture({
+          skills: {
+            ...DEFAULT_SKILLS,
+            'meltingspot-groups/notes.md': '# Notes\n\nUse `group_list`.\n',
+          },
+        }),
+      );
+    });
+
+    describe('references index', () => {
+      const references = {
+        'meltingspot-groups/references/groups.md': reference(DELIVERED_LINE, 'Use `group_list`.'),
+        'meltingspot-groups/references/topics.md': reference(UPCOMING_LINE, 'Use `topic_list`.'),
+      };
+
+      it('fails when a reference is missing from the index', () => {
+        const root = createFixture({
+          skills: {
+            'meltingspot-groups/SKILL.md': groupsSkill([['references/groups.md', 'delivered']]),
+            ...references,
+          },
+        });
+
+        assertFails(
+          root,
+          /skills\/meltingspot-groups\/SKILL\.md: the references index does not list "references\/topics\.md"/,
+        );
+      });
+
+      it('fails on a listed path that does not exist', () => {
+        const root = createFixture({
+          skills: {
+            'meltingspot-groups/SKILL.md': groupsSkill([
+              ['references/groups.md', 'delivered'],
+              ['references/topics.md', 'upcoming'],
+              ['references/tags.md', 'delivered'],
+            ]),
+            ...references,
+          },
+        });
+
+        assertFails(
+          root,
+          /skills\/meltingspot-groups\/SKILL\.md:\d+: the index lists "references\/tags\.md", which does not exist/,
+        );
+      });
+
+      it('fails when the index status differs from the status line', () => {
+        const root = createFixture({
+          skills: {
+            'meltingspot-groups/SKILL.md': groupsSkill([
+              ['references/groups.md', 'delivered'],
+              ['references/topics.md', 'delivered'],
+            ]),
+            ...references,
+          },
+        });
+
+        assertFails(
+          root,
+          /skills\/meltingspot-groups\/SKILL\.md:\d+: the index says "delivered" for "references\/topics\.md", whose status line says "upcoming"/,
+        );
+      });
+    });
+  });
+
   it('passes on the real plugin root', () => {
     const { status, stdout, stderr } = check();
 
     assert.equal(status, 0, stderr);
-    assert.match(stdout, /Tools: 62 delivered, 38 upcoming\./);
+    assert.match(stdout, /Tools: 100 delivered, 0 upcoming\./);
   });
 });

@@ -13,3 +13,6 @@ All notable changes to this plugin are documented here. Versions follow the
 - Connection to the MeltingSpot MCP server.
 - Skills `meltingspot-conventions`, `meltingspot-write-safely`,
   `meltingspot-errors` and `meltingspot-untrusted-content`.
+- Skill `meltingspot-domain`, which explains what a Spot contains and how its
+  members, groups and resources relate, so the assistant understands your
+  requests instead of guessing.

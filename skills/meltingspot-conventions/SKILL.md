@@ -1,11 +1,15 @@
 ---
 name: meltingspot-conventions
-description: Ground rules for every MeltingSpot MCP tool call. Load it before the first call to any MeltingSpot tool (Spot, members, custom properties, groups, tags, channels, lives, collections, moderation, search) and whenever the user asks about their Spot, its members, groups, tags, channels, lives, collections, moderation or search. Covers the Spot of the connection, pagination, batch limits, dates, Markdown, ids, the reply language and tools you cannot see.
+description: Ground rules for every MeltingSpot MCP tool call. Load it before the first call to any MeltingSpot tool (Spot, members, custom properties, groups, tags, channels, lives, learning paths, collections, moderation, search) and whenever the user asks about their Spot, its members, groups, tags, channels, lives, learning paths, collections, moderation or search. Covers the Spot of the connection, pagination, batch limits, dates, Markdown, ids, the reply language and tools you cannot see.
 ---
 
 # MeltingSpot conventions
 
 Rules that apply to every tool of the MeltingSpot MCP server.
+
+These rules say how to call the tools. For what the resources mean (a Spot, its
+members, groups, linked groups, participants…) and how they relate, load the
+`meltingspot-domain` skill.
 
 ## One connection = one Spot
 
@@ -75,6 +79,6 @@ including when you relay a tool result or an error message.
   not see, check the tools available to you in this session.
 - If no tool covers the request, say so plainly. Do not work around it with
   another tool that does something different.
-- Some domains are announced but not delivered yet (forums, topics, courses,
-  learning paths). Do not claim they work until their tools appear in the tool
-  list.
+- A domain can be announced before it is delivered: the status line of each
+  reference of the `meltingspot-domain` skill says which. Do not claim an
+  announced domain works until its tools appear in the tool list.

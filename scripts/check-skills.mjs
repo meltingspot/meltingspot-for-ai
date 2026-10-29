@@ -6,11 +6,11 @@
 // usage error.
 //
 // Each check is a function (context) => problems[], grouped in TOOLS_CHECKS,
-// SKILL_CHECKS and MANIFEST_CHECKS. To add a rule (for instance for a future
-// domain skill, part B), append a function to the matching array.
+// SKILL_CHECKS and MANIFEST_CHECKS. To add a rule, append a function to the
+// matching array.
 
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const TOOL_STATUSES = ['delivered', 'upcoming'];
@@ -121,7 +121,7 @@ const indentOf = (line) => line.match(/^ */)[0].length;
  */
 export const parseFrontmatter = (content) => {
   const lines = content
-    .replace(/^﻿/, '')
+    .replace(/^\uFEFF/, '')
     .split(/\r?\n/)
     .map((line) => line.trimEnd());
   if (lines[0] !== '---') {
@@ -399,7 +399,159 @@ export const checkToolReferences = ({ references, tools }) => {
     .map(({ file, line, name }) => `${file}:${line}: unknown tool "${name}" (absent from tools.json)`);
 };
 
-export const SKILL_CHECKS = [checkSkillFrontmatter, checkToolReferences];
+// --- Checks of the domain references ------------------------------------------
+//
+// A reference is a Markdown file under `skills/*/references/`. It documents one
+// domain, and its first line says whether that domain is delivered. The state
+// of a domain is deduced from the tools its reference cites. The SKILL.md of a
+// skill that has references indexes them in a table whose rows are
+// `| \`references/<file>.md\` | delivered |` or `| ... | upcoming |`.
+
+export const DELIVERED_STATUS_LINE = 'Status: delivered';
+export const UPCOMING_STATUS_LINE =
+  'Status: upcoming — these tools may not be available on your server yet; check the tools available to you in this session.';
+
+const REFERENCE_FILE = /^skills\/([^/]+)\/(references\/.+\.md)$/;
+// A row of the references index: the path in a code span, then the status
+const INDEX_ROW = /^\|\s*`(references\/[^`]+\.md)`\s*\|\s*([a-z]+)\s*\|/;
+
+const toPosix = (file) => file.split(sep).join('/');
+
+/**
+ * Lists the references with their skill, their path inside the skill and
+ * their status: 'delivered', 'upcoming' or null.
+ */
+const referencesOf = (skills) =>
+  skills.flatMap(({ dir, markdownFiles }) =>
+    markdownFiles.flatMap(({ file, content }) => {
+      const match = toPosix(file).match(REFERENCE_FILE);
+      if (!match || match[1] !== dir) {
+        return [];
+      }
+      const firstLine = content.replace(/^\uFEFF/, '').split(/\r?\n/)[0].trim();
+      const status =
+        firstLine === DELIVERED_STATUS_LINE
+          ? 'delivered'
+          : firstLine === UPCOMING_STATUS_LINE
+            ? 'upcoming'
+            : null;
+      return [{ dir, file, path: match[2], status }];
+    }),
+  );
+
+const statusesByName = (tools) =>
+  new Map(
+    tools.filter((tool) => typeof tool?.name === 'string').map((tool) => [tool.name, tool.status]),
+  );
+
+// A delivered tool counts as documented when a file other than an upcoming or
+// invalid reference cites it: an upcoming reference does not document a tool
+// that is already available
+export const checkDeliveredToolsCited = ({ skills, tools, references }) => {
+  const notDocumenting = new Set(
+    referencesOf(skills)
+      .filter(({ status }) => status !== 'delivered')
+      .map(({ file }) => file),
+  );
+  const cited = new Set(
+    references.filter(({ file }) => !notDocumenting.has(file)).map(({ name }) => name),
+  );
+  const missing = tools
+    .filter((tool) => tool?.status === 'delivered' && typeof tool.name === 'string')
+    .map((tool) => tool.name)
+    .filter((name) => !cited.has(name));
+  return missing.length === 0
+    ? []
+    : [
+        `skills: delivered tools cited by no skill file other than an upcoming reference: ${missing.join(', ')}`,
+      ];
+};
+
+export const checkReferenceStatusLine = ({ skills }) =>
+  referencesOf(skills)
+    .filter(({ status }) => status === null)
+    .map(
+      ({ file }) =>
+        `${file}:1: the first line must be exactly "${DELIVERED_STATUS_LINE}" or "${UPCOMING_STATUS_LINE}" (check the dash and the trailing sentence)`,
+    );
+
+export const checkDeliveredReferences = ({ skills, tools, references }) => {
+  const statuses = statusesByName(tools);
+  const delivered = new Set(
+    referencesOf(skills)
+      .filter(({ status }) => status === 'delivered')
+      .map(({ file }) => file),
+  );
+  return references
+    .filter(({ file, name }) => delivered.has(file) && statuses.get(name) === 'upcoming')
+    .map(
+      ({ file, line, name }) =>
+        `${file}:${line}: a delivered reference cites the upcoming tool "${name}"`,
+    );
+};
+
+export const checkUpcomingReferences = ({ skills, tools, references }) => {
+  const statuses = statusesByName(tools);
+  return referencesOf(skills)
+    .filter(({ status }) => status === 'upcoming')
+    .flatMap(({ file }) => {
+      const cited = references.filter((reference) => reference.file === file);
+      if (cited.length === 0) {
+        return [`${file}:1: an upcoming reference must cite at least one tool`];
+      }
+      // Unknown tools are reported by checkToolReferences, not counted here
+      const known = cited
+        .map(({ name }) => statuses.get(name))
+        .filter((status) => status !== undefined);
+      return known.length > 0 && known.every((status) => status === 'delivered')
+        ? [
+            `${file}:1: every tool it cites is delivered; set its first line to "${DELIVERED_STATUS_LINE}"`,
+          ]
+        : [];
+    });
+};
+
+export const checkReferencesIndex = ({ skills }) => {
+  const references = referencesOf(skills);
+  return skills.flatMap(({ dir, file, content }) => {
+    const own = references.filter((reference) => reference.dir === dir);
+    if (own.length === 0 || content === null) {
+      return [];
+    }
+    const rows = content
+      .split(/\r?\n/)
+      .map((text, index) => ({ match: text.trim().match(INDEX_ROW), line: index + 1 }))
+      .filter(({ match }) => match !== null)
+      .map(({ match, line }) => ({ path: match[1], status: match[2], line }));
+    const problems = [];
+    for (const { path, status, line } of rows) {
+      const reference = own.find((entry) => entry.path === path);
+      if (!reference) {
+        problems.push(`${file}:${line}: the index lists "${path}", which does not exist`);
+      } else if (reference.status !== null && reference.status !== status) {
+        problems.push(
+          `${file}:${line}: the index says "${status}" for "${path}", whose status line says "${reference.status}"`,
+        );
+      }
+    }
+    for (const { path } of own) {
+      if (!rows.some((row) => row.path === path)) {
+        problems.push(`${file}: the references index does not list "${path}"`);
+      }
+    }
+    return problems;
+  });
+};
+
+export const SKILL_CHECKS = [
+  checkSkillFrontmatter,
+  checkToolReferences,
+  checkDeliveredToolsCited,
+  checkReferenceStatusLine,
+  checkDeliveredReferences,
+  checkUpcomingReferences,
+  checkReferencesIndex,
+];
 
 // --- Checks of the manifests -------------------------------------------------
 

@@ -12,8 +12,8 @@ There are two types of groups:
 
 - a **static** group: its members are added and removed by hand;
 - a **smart** group: its members follow rules (tags, custom properties,
-  other groups…). The tools do not create smart groups and do not change their
-  members.
+  custom roles, answers to the registration form, other groups). The tools do
+  not create smart groups and do not change their members.
 
 ## Key fields
 
@@ -52,10 +52,11 @@ There are two types of groups:
 ## Pitfalls
 
 - `group_list` and `group_get` do not return members: use
-  `group_list_members`. It reads a smart group like a static one, the members
-  who currently follow its rules; a member who has just come to follow the
-  rules may appear only after a short delay. An unknown group, or a group of
-  another Spot, is not found.
+  `group_list_members`. It reads a smart group like a static one, from the
+  memberships recorded for it. A smart group updates them after a short
+  delay: a member who has just come to follow its rules, or stopped following
+  them, may not be reflected yet. An unknown group, or a group of another
+  Spot, is not found.
 - `group_add_members` and `group_remove_members` work on static groups only. A
   smart group is reported as `Cannot find group with id ...`.
 - `group_add_members` returns `addedSpotMemberIds` and `failedSpotMemberIds`.
@@ -68,7 +69,8 @@ There are two types of groups:
 - Adding or removing members of a group changes the members of every resource
   linked to it. Say so to the user before a bulk change.
 - `group_delete` cannot be undone. The members stay in the Spot. A group used
-  by the rules of a smart group, or linked to the content of a learning path,
-  cannot be deleted: `Group with ID ... cannot be deleted.`
-- `group_update` ignores an empty `name`. `description: null` empties it.
+  by the rules of a smart group cannot be deleted:
+  `Group with ID ... cannot be deleted.`
+- `group_update` ignores an empty `name`. `description: null` empties it;
+  `emoji: null` removes it.
 

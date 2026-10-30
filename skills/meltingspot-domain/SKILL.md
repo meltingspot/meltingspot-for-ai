@@ -69,8 +69,9 @@ result surprises you.
 
 - A member belongs to groups and carries tags.
 - A **static** group is filled by hand (`group_add_members`). A **smart**
-  group fills itself from rules (tags, custom properties, custom roles, other
-  groups); the tools do not change its members.
+  group fills itself from rules (tags, custom properties, custom roles,
+  answers to the registration form, other groups); the tools do not change
+  its members.
 - A group, a tag or a custom role used by the rules of a smart group cannot
   be deleted.
 

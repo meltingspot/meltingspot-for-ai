@@ -37,7 +37,8 @@ company, plan…). Each member can have a value for each property.
 - A member is the person behind every participation: channel and forum
   members, live speakers and participants, course and learning path
   participants are all designated through Spot members.
-- Custom properties can feed the rules of smart groups.
+- Custom properties and the answers to the registration form can feed the
+  rules of smart groups.
 - A member carries at most one custom role, its `customRoleId`, which gives
   it extra permissions (see `custom-roles.md`). `member_list` filters the
   members by `customRoleId`; `member_update` gives or takes back the role.
@@ -89,9 +90,9 @@ company, plan…). Each member can have a value for each property.
 - `member_list_custom_properties` lists only the properties that have a value.
 - `member_set_custom_properties`:
   - designates properties by slug, from `custom_property_list`;
-  - skips without an error an unknown slug, a value of the wrong type, or
-    select options that do not exist. Compare the returned `items` with what
-    you sent;
+  - skips without an error an unknown slug or a value of the wrong type. For
+    a select, it drops the option slugs that do not exist, and skips the value
+    when none exists. Compare the returned `items` with what you sent;
   - takes option slugs for a select; `SingleSelect` takes exactly one;
   - deletes a value when it is `null`.
 - No tool creates or changes the custom properties themselves.
